@@ -1,3 +1,9 @@
+# 1.3.8
+
+- fix: Support rotate image with correct exif setting when upload image
+
+
+
 # 1.3.7
 
 Security related bug fixes.
