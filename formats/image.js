@@ -1,4 +1,5 @@
 import Parchment from 'parchment';
+import EXIF from 'exif-js';
 import { sanitize } from '../formats/link';
 
 const ATTRIBUTES = [
@@ -7,6 +8,38 @@ const ATTRIBUTES = [
   'width'
 ];
 
+const detectOrientation = (orientation) => {
+  let transform = null;
+  switch (orientation) {
+    case 1: // The 0th row is at the visual top of the image, and the 0th column is the visual left-hand side.
+      break;
+    case 2: // The 0th row is at the visual top of the image, and the 0th column is the visual right-hand side.
+      transform = "rotateY(180deg)";
+      break;
+    case 3: // The 0th row is at the visual bottom of the image, and the 0th column is the visual right-hand side.
+      transform = "rotateY(360deg) rotate(180deg)";
+      break;
+    case 4: // Toe 0th row is at the visual bottom of the image, and the 0th column is the visual left-hand side.
+      transform = "rotateX(180deg)";
+      break;
+    case 5: // The 0th row is the visual left-hand side of the image, and the 0th column is the visual top.
+      transform = "rotateY(180deg) rotate(90deg)";
+      break;
+    case 6: // The 0th row is the visual right-hand side of the image, and the 0th column is the visual top.
+      transform = "rotate(90deg)";
+      break;
+    case 7: // The 0th row is the visual right-hand side of the image, and the 0th column is the visual bottom.
+      transform = "rotateY(180deg) rotate(270deg)";
+      break;
+    case 8: // The 0th row is the visual left-hand side of the image, and the 0th column is the visual bottom.
+      transform = "rotate(270deg)";
+      break;
+    default:
+      break;
+  }
+  return transform;
+}
+
 
 class Image extends Parchment.Embed {
   static create(value) {
@@ -14,6 +47,17 @@ class Image extends Parchment.Embed {
     if (typeof value === 'string') {
       node.setAttribute('src', this.sanitize(value));
     }
+
+    node.onload = function () {
+      EXIF.getData(node, function () {
+        const allMetaData = EXIF.getAllTags(this);
+        const transform = detectOrientation(allMetaData.Orientation);
+        if (transform) {
+          node.style.transform = transform;
+        }
+      });
+    }
+
     return node;
   }
 
